@@ -278,6 +278,15 @@ app.use(session({
     }
 }));
 
+// Authentication middleware (intentionally simple for demo)
+function requireAuth(req, res, next) {
+    if (req.session && req.session.userId) {
+        return next();
+    } else {
+        return res.redirect('/login');
+    }
+}
+
 // Routes
 
 // Serve static files

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - BusBook Travel</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="busbook.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-bus"></i>
+                <span>BusBook</span>
+            </div>
+            <div class="nav-menu">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/#routes" class="nav-link">Routes</a>
+                <a href="/#about" class="nav-link">About</a>
+                <a href="/#contact" class="nav-link">Contact</a>
+                <div class="nav-auth">
+                    <a href="/login" class="btn btn-outline">Login</a>
+                    <a href="/register" class="btn btn-primary">Sign Up</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Registration Form -->
+    <div class="form-container">
+        <div class="form-title">
+            <h2>Create Your Account</h2>
+            <p>Join BusBook for convenient travel booking</p>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <form id="registerForm">
+            <div class="form-group">
+                <label for="fullName">Full Name</label>
+                <input type="text" id="fullName" name="fullName" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label for="phone">Phone Number</label>
+                <input type="tel" id="phone" name="phone" class="form-control" placeholder="+1 (555) 123-4567" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" class="form-control" required>
+                <small style="color: #64748b; font-size: 0.85rem;">Minimum 6 characters</small>
+            </div>
+
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label for="dateOfBirth">Date of Birth</label>
+                <input type="date" id="dateOfBirth" name="dateOfBirth" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: normal;">
+                    <input type="checkbox" id="terms" name="terms" required>
+                    I agree to the <a href="#" style="color: #2563eb;">Terms of Service</a> and <a href="#" style="color: #2563eb;">Privacy Policy</a>
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: normal;">
+                    <input type="checkbox" id="newsletter" name="newsletter">
+                    Subscribe to our newsletter for travel updates and offers
+                </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                <span id="registerText">Create Account</span>
+                <span id="registerLoading" class="loading" style="display: none;"></span>
+            </button>
+        </form>
+
+        <div class="form-footer">
+            <p>Already have an account? <a href="/login">Sign in here</a></p>
+        </div>
+    </div>
+
+    <script>
+        // Registration form handler
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const registerButton = document.querySelector('button[type="submit"]');
+            const registerText = document.getElementById('registerText');
+            const registerLoading = document.getElementById('registerLoading');
+            
+            const formData = new FormData(e.target);
+            const password = formData.get('password');
+            const confirmPassword = formData.get('confirmPassword');
+            
+            // Validate passwords match
+            if (password !== confirmPassword) {
+                showAlert('Passwords do not match!', 'error');
+                return;
+            }
+            
+            // Validate password strength
+            if (password.length < 6) {
+                showAlert('Password must be at least 6 characters long!', 'error');
+                return;
+            }
+            
+            // Check terms acceptance
+            if (!formData.get('terms')) {
+                showAlert('You must agree to the Terms of Service!', 'error');
+                return;
+            }
+            
+            // Show loading state
+            registerText.style.display = 'none';
+            registerLoading.style.display = 'inline-block';
+            registerButton.disabled = true;
+            
+            const registrationData = {
+                fullName: formData.get('fullName'),
+                email: formData.get('email'),
+                phone: formData.get('phone'),
+                password: password,
+                dateOfBirth: formData.get('dateOfBirth'),
+                newsletter: formData.get('newsletter') === 'on'
+            };
+            
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(registrationData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showAlert('Account created successfully! Redirecting to login...', 'success');
+                    
+                    // Clear form
+                    document.getElementById('registerForm').reset();
+                    
+                    // Redirect to login page
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 2000);
+                } else {
+                    showAlert(result.error || 'Registration failed. Please try again.', 'error');
+                }
+            } catch (error) {
+                showAlert('Network error. Please try again.', 'error');
+            } finally {
+                // Reset button state
+                registerText.style.display = 'inline';
+                registerLoading.style.display = 'none';
+                registerButton.disabled = false;
+            }
+        });
+        
+        function showAlert(message, type) {
+            const container = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            
+            container.innerHTML = '';
+            container.appendChild(alert);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (alert.parentNode) {
+                    alert.parentNode.removeChild(alert);
+                }
+            }, 5000);
+        }
+        
+        // Real-time password confirmation validation
+        document.getElementById('confirmPassword').addEventListener('input', function() {
+            const password = document.getElementById('password').value;
+            const confirmPassword = this.value;
+            
+            if (confirmPassword && password !== confirmPassword) {
+                this.style.borderColor = '#ef4444';
+            } else {
+                this.style.borderColor = '#e2e8f0';
+            }
+        });
+        
+        // Phone number formatting
+        document.getElementById('phone').addEventListener('input', function() {
+            let value = this.value.replace(/\D/g, '');
+            if (value.length >= 10) {
+                value = value.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
+            }
+            this.value = value;
+        });
+        
+        // Set max date for date of birth (must be at least 13 years old)
+        document.addEventListener('DOMContentLoaded', function() {
+            const dateInput = document.getElementById('dateOfBirth');
+            const today = new Date();
+            const maxDate = new Date(today.getFullYear() - 13, today.getMonth(), today.getDate());
+            dateInput.max = maxDate.toISOString().split('T')[0];
+        });
+    </script>
+</body>
+</html>

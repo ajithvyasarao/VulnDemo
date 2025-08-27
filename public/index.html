@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BusBook - Premium Bus Travel Services</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="busbook.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-bus"></i>
+                <span>BusBook</span>
+            </div>
+            <div class="nav-menu">
+                <a href="/" class="nav-link active">Home</a>
+                <a href="#routes" class="nav-link">Routes</a>
+                <a href="#about" class="nav-link">About</a>
+                <a href="#contact" class="nav-link">Contact</a>
+                <div class="nav-auth">
+                    <a href="/login" class="btn btn-outline">Login</a>
+                    <a href="/register" class="btn btn-primary">Sign Up</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1>Travel Comfortably Across America</h1>
+                <p>Book premium bus tickets with the most reliable travel service. Safe, comfortable, and affordable journeys to your destination.</p>
+                <div class="hero-features">
+                    <div class="feature">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Safe Travel</span>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-clock"></i>
+                        <span>On-Time Departure</span>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-wifi"></i>
+                        <span>Free WiFi</span>
+                    </div>
+                </div>
+                <a href="/register" class="btn btn-large btn-primary">Start Booking Now</a>
+            </div>
+            <div class="hero-image">
+                <i class="fas fa-bus-alt hero-icon"></i>
+            </div>
+        </div>
+    </section>
+
+    <!-- Search Section -->
+    <section class="search-section">
+        <div class="container">
+            <div class="search-card">
+                <h2>Find Your Perfect Journey</h2>
+                <form class="search-form" id="searchForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>From</label>
+                            <select id="fromCity" required>
+                                <option value="">Select departure city</option>
+                                <option value="New York">New York</option>
+                                <option value="Boston">Boston</option>
+                                <option value="Philadelphia">Philadelphia</option>
+                                <option value="Washington DC">Washington DC</option>
+                                <option value="Los Angeles">Los Angeles</option>
+                                <option value="San Francisco">San Francisco</option>
+                                <option value="Chicago">Chicago</option>
+                                <option value="Detroit">Detroit</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>To</label>
+                            <select id="toCity" required>
+                                <option value="">Select destination city</option>
+                                <option value="New York">New York</option>
+                                <option value="Boston">Boston</option>
+                                <option value="Philadelphia">Philadelphia</option>
+                                <option value="Washington DC">Washington DC</option>
+                                <option value="Los Angeles">Los Angeles</option>
+                                <option value="San Francisco">San Francisco</option>
+                                <option value="Chicago">Chicago</option>
+                                <option value="Detroit">Detroit</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Departure Date</label>
+                            <input type="date" id="departureDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Passengers</label>
+                            <select id="passengers">
+                                <option value="1">1 Passenger</option>
+                                <option value="2">2 Passengers</option>
+                                <option value="3">3 Passengers</option>
+                                <option value="4">4 Passengers</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-search">
+                            <i class="fas fa-search"></i>
+                            Search Buses
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Routes Section -->
+    <section id="routes" class="routes-section">
+        <div class="container">
+            <h2>Popular Routes</h2>
+            <div id="routesGrid" class="routes-grid">
+                <!-- Routes will be loaded here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section class="services-section">
+        <div class="container">
+            <h2>Why Choose BusBook?</h2>
+            <div class="services-grid">
+                <div class="service-card">
+                    <i class="fas fa-credit-card"></i>
+                    <h3>Secure Payments</h3>
+                    <p>Your payment information is protected with industry-standard encryption and security measures.</p>
+                </div>
+                <div class="service-card">
+                    <i class="fas fa-headset"></i>
+                    <h3>24/7 Support</h3>
+                    <p>Our customer service team is available round the clock to assist you with any queries or concerns.</p>
+                </div>
+                <div class="service-card">
+                    <i class="fas fa-mobile-alt"></i>
+                    <h3>Mobile Friendly</h3>
+                    <p>Book your tickets on the go with our responsive website that works perfectly on all devices.</p>
+                </div>
+                <div class="service-card">
+                    <i class="fas fa-route"></i>
+                    <h3>Wide Network</h3>
+                    <p>Extensive route network covering major cities across the country with frequent departures.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="about-section">
+        <div class="container">
+            <div class="about-content">
+                <div class="about-text">
+                    <h2>About BusBook Travel</h2>
+                    <p>For over 15 years, BusBook has been America's trusted partner for intercity bus travel. We've successfully transported millions of passengers across the nation, maintaining our commitment to safety, comfort, and reliability.</p>
+                    <div class="stats">
+                        <div class="stat">
+                            <h3>2M+</h3>
+                            <p>Happy Customers</p>
+                        </div>
+                        <div class="stat">
+                            <h3>500+</h3>
+                            <p>Routes Available</p>
+                        </div>
+                        <div class="stat">
+                            <h3>15+</h3>
+                            <p>Years of Service</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="about-image">
+                    <i class="fas fa-map-marked-alt"></i>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <div class="footer-brand">
+                        <i class="fas fa-bus"></i>
+                        <span>BusBook</span>
+                    </div>
+                    <p>Your trusted partner for comfortable and reliable bus travel across America.</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="/">Home</a></li>
+                        <li><a href="/register">Book Now</a></li>
+                        <li><a href="#routes">Routes</a></li>
+                        <li><a href="#about">About Us</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="#contact">Contact Us</a></li>
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Contact Info</h3>
+                    <div class="contact-info">
+                        <p><i class="fas fa-phone"></i> 1-800-BUSBOOK</p>
+                        <p><i class="fas fa-envelope"></i> support@busbook.com</p>
+                        <p><i class="fas fa-map-marker-alt"></i> New York, USA</p>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 BusBook Travel Services. All rights reserved. | 
+                   <a href="/vulnerability" style="color: #64748b; text-decoration: none; font-size: 0.8rem;">Security Research</a>
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="busbook.js"></script>
+</body>
+</html>

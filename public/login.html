@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - BusBook Travel</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="busbook.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-bus"></i>
+                <span>BusBook</span>
+            </div>
+            <div class="nav-menu">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/#routes" class="nav-link">Routes</a>
+                <a href="/#about" class="nav-link">About</a>
+                <a href="/#contact" class="nav-link">Contact</a>
+                <div class="nav-auth">
+                    <a href="/login" class="btn btn-outline">Login</a>
+                    <a href="/register" class="btn btn-primary">Sign Up</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Login Form -->
+    <div class="form-container">
+        <div class="form-title">
+            <h2>Welcome Back</h2>
+            <p>Sign in to your BusBook account</p>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: normal;">
+                    <input type="checkbox" id="remember" name="remember">
+                    Remember me
+                </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                <span id="loginText">Sign In</span>
+                <span id="loginLoading" class="loading" style="display: none;"></span>
+            </button>
+        </form>
+
+        <div class="form-footer">
+            <p>Don't have an account? <a href="/register">Create one here</a></p>
+            <p><a href="#" onclick="forgotPassword()">Forgot your password?</a></p>
+        </div>
+
+        <!-- Demo Credentials Info -->
+        <div style="margin-top: 2rem; padding: 1rem; background: #f8fafc; border-radius: 0.5rem; border-left: 4px solid #3b82f6;">
+            <h4 style="color: #1e40af; margin-bottom: 0.5rem;">Demo Accounts:</h4>
+            <div style="font-size: 0.9rem; color: #64748b;">
+                <p><strong>Regular User:</strong> user@demo.com / password123</p>
+                <p><strong>Admin User:</strong> admin@demo.com / admin123</p>
+                <p><strong>Manager:</strong> manager@demo.com / manager123</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Login form handler
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const loginButton = document.querySelector('button[type="submit"]');
+            const loginText = document.getElementById('loginText');
+            const loginLoading = document.getElementById('loginLoading');
+            
+            // Show loading state
+            loginText.style.display = 'none';
+            loginLoading.style.display = 'inline-block';
+            loginButton.disabled = true;
+            
+            const formData = new FormData(e.target);
+            const loginData = {
+                email: formData.get('email'),
+                password: formData.get('password'),
+                remember: formData.get('remember') === 'on'
+            };
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(loginData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showAlert('Login successful! Redirecting...', 'success');
+                    
+                    // Redirect based on user role
+                    setTimeout(() => {
+                        if (result.user.role === 'admin' || result.user.role === 'manager') {
+                            window.location.href = '/dashboard';
+                        } else {
+                            window.location.href = '/dashboard';
+                        }
+                    }, 1000);
+                } else {
+                    showAlert(result.error || 'Login failed. Please try again.', 'error');
+                }
+            } catch (error) {
+                showAlert('Network error. Please try again.', 'error');
+            } finally {
+                // Reset button state
+                loginText.style.display = 'inline';
+                loginLoading.style.display = 'none';
+                loginButton.disabled = false;
+            }
+        });
+        
+        function showAlert(message, type) {
+            const container = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            
+            container.innerHTML = '';
+            container.appendChild(alert);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (alert.parentNode) {
+                    alert.parentNode.removeChild(alert);
+                }
+            }, 5000);
+        }
+        
+        function forgotPassword() {
+            showAlert('Password reset functionality would be implemented here. For demo purposes, use the provided credentials.', 'warning');
+        }
+        
+        // Auto-fill demo credentials on click
+        document.addEventListener('DOMContentLoaded', () => {
+            // Add click handlers for demo credentials
+            const demoSection = document.querySelector('[style*="border-left: 4px solid #3b82f6"]');
+            if (demoSection) {
+                const paragraphs = demoSection.querySelectorAll('p');
+                paragraphs.forEach(p => {
+                    p.style.cursor = 'pointer';
+                    p.style.padding = '0.25rem';
+                    p.style.borderRadius = '0.25rem';
+                    p.style.transition = 'background-color 0.2s';
+                    
+                    p.addEventListener('mouseover', () => {
+                        p.style.backgroundColor = '#e2e8f0';
+                    });
+                    
+                    p.addEventListener('mouseout', () => {
+                        p.style.backgroundColor = 'transparent';
+                    });
+                    
+                    p.addEventListener('click', () => {
+                        const text = p.textContent;
+                        if (text.includes('user@demo.com')) {
+                            document.getElementById('email').value = 'user@demo.com';
+                            document.getElementById('password').value = 'password123';
+                        } else if (text.includes('admin@demo.com')) {
+                            document.getElementById('email').value = 'admin@demo.com';
+                            document.getElementById('password').value = 'admin123';
+                        } else if (text.includes('manager@demo.com')) {
+                            document.getElementById('email').value = 'manager@demo.com';
+                            document.getElementById('password').value = 'manager123';
+                        }
+                        showAlert('Demo credentials filled in!', 'success');
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>

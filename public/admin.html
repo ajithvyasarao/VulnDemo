@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - BusBook Travel</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="busbook.css">
+    <style>
+        .admin-header {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+        .vulnerability-notice {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-left: 4px solid #dc2626;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            border-radius: 0.5rem;
+        }
+        .vulnerability-notice h4 {
+            color: #dc2626;
+            margin: 0 0 0.5rem 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-shield-alt" style="color: #dc2626;"></i>
+                <span>BusBook Admin</span>
+            </div>
+            <div class="nav-menu">
+                <a href="/dashboard" class="nav-link">← Back to Dashboard</a>
+                <a href="/" class="nav-link">Home</a>
+                <div class="nav-auth">
+                    <span id="userGreeting" style="margin-right: 1rem; color: #64748b;"></span>
+                    <button onclick="logout()" class="btn btn-outline">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Admin Header -->
+    <div class="admin-header">
+        <div class="container">
+            <h1><i class="fas fa-shield-alt"></i> Administrative Control Panel</h1>
+            <p>System administration and user management portal</p>
+        </div>
+    </div>
+
+    <!-- Vulnerability Notice -->
+    <div class="container">
+        <div class="vulnerability-notice">
+            <h4><i class="fas fa-exclamation-triangle"></i> Security Alert</h4>
+            <p><strong>Vulnerability Detected:</strong> This admin panel is accessible without proper role validation. Any authenticated user can access this panel by navigating to <code>/admin</code>.</p>
+            <p><strong>Risk Level:</strong> Critical - Unauthorized access to administrative functions</p>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div class="dashboard">
+        <div class="container">
+            <!-- Statistics -->
+            <div class="admin-stats">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalUsers">0</div>
+                    <div class="stat-label">Total Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalBookings">0</div>
+                    <div class="stat-label">Total Bookings</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalRevenue">$0</div>
+                    <div class="stat-label">Total Revenue</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="activeRoutes">0</div>
+                    <div class="stat-label">Active Routes</div>
+                </div>
+            </div>
+
+            <!-- User Management Section -->
+            <div style="margin-top: 2rem; background: #f8fafc; padding: 1.5rem; border-radius: 0.5rem;">
+                <h3>User Management</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1rem;">
+                    <!-- Add New User -->
+                    <div>
+                        <h4>Add New User</h4>
+                        <form id="addUserForm">
+                            <div class="form-group" style="margin-bottom: 1rem;">
+                                <label>Full Name</label>
+                                <input type="text" id="newUserName" required>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 1rem;">
+                                <label>Email</label>
+                                <input type="email" id="newUserEmail" required>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 1rem;">
+                                <label>Password</label>
+                                <input type="password" id="newUserPassword" required>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 1rem;">
+                                <label>Phone</label>
+                                <input type="tel" id="newUserPhone">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 1rem;">
+                                <label>Role</label>
+                                <select id="newUserRole">
+                                    <option value="user">User</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="manager">Manager</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Add User</button>
+                        </form>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div>
+                        <h4>Quick Actions</h4>
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <button onclick="refreshAdminData()" class="btn btn-outline">Refresh Data</button>
+                            <button onclick="exportUserData()" class="btn btn-outline">Export Users</button>
+                            <button onclick="showSystemInfo()" class="btn btn-outline">System Info</button>
+                        </div>
+                        
+                        <div id="systemInfo" style="margin-top: 1rem; display: none; background: #fff; padding: 1rem; border-radius: 0.25rem; border: 1px solid #e2e8f0;">
+                            <h5>System Information</h5>
+                            <p><strong>Database:</strong> MongoDB Atlas</p>
+                            <p><strong>Status:</strong> <span style="color: #10b981;">Connected</span></p>
+                            <p><strong>Security:</strong> <span style="color: #ef4444;">⚠️ Vulnerabilities Present</span></p>
+                            <p><strong>Auth:</strong> <span style="color: #ef4444;">No Role Validation</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users Table -->
+            <div style="margin-top: 2rem;">
+                <h3>All Users</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Password</th>
+                            <th>Phone</th>
+                            <th>Role</th>
+                            <th>Date Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTable">
+                        <!-- Users will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Bookings Table -->
+            <div style="margin-top: 2rem;">
+                <h3>All Bookings</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Booking ID</th>
+                            <th>User</th>
+                            <th>Route</th>
+                            <th>Date</th>
+                            <th>Passengers</th>
+                            <th>Price</th>
+                            <th>Card Number</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminBookingsTable">
+                        <!-- Bookings will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        // Load user session on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkSession();
+            loadAdminData();
+        });
+
+        async function checkSession() {
+            try {
+                const response = await fetch('/api/session');
+                if (response.ok) {
+                    currentUser = await response.json();
+                    document.getElementById('userGreeting').textContent = `Welcome, ${currentUser.fullName}`;
+                } else {
+                    window.location.href = '/login';
+                }
+            } catch (error) {
+                console.error('Session check failed:', error);
+                window.location.href = '/login';
+            }
+        }
+
+        async function loadAdminData() {
+            try {
+                const [usersResponse, bookingsResponse, statsResponse] = await Promise.all([
+                    fetch('/api/admin/users'),
+                    fetch('/api/admin/bookings'),
+                    fetch('/api/admin/stats')
+                ]);
+
+                const users = await usersResponse.json();
+                const bookings = await bookingsResponse.json();
+                const stats = await statsResponse.json();
+
+                // Update stats
+                document.getElementById('totalUsers').textContent = stats.totalUsers;
+                document.getElementById('totalBookings').textContent = stats.totalBookings;
+                document.getElementById('totalRevenue').textContent = `$${stats.totalRevenue}`;
+                document.getElementById('activeRoutes').textContent = stats.activeRoutes;
+
+                // Update users table
+                const usersTable = document.getElementById('usersTable');
+                usersTable.innerHTML = users.map(user => `
+                    <tr>
+                        <td>${user._id}</td>
+                        <td>${user.fullName}</td>
+                        <td>${user.email}</td>
+                        <td style="background: #fef2f2; color: #dc2626; font-weight: 600; font-family: monospace;">${user.password}</td>
+                        <td>${user.phone || 'N/A'}</td>
+                        <td>
+                            <select onchange="changeUserRole('${user._id}', this.value)" ${user._id === currentUser.id ? 'disabled' : ''}>
+                                <option value="user" ${user.role === 'user' ? 'selected' : ''}>User</option>
+                                <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
+                                <option value="manager" ${user.role === 'manager' ? 'selected' : ''}>Manager</option>
+                            </select>
+                        </td>
+                        <td>${new Date(user.createdAt).toLocaleDateString()}</td>
+                        <td>
+                            ${user._id !== currentUser.id ? 
+                                `<button onclick="deleteUser('${user._id}', '${user.fullName}')" class="btn btn-danger" style="font-size: 0.8rem; padding: 0.25rem 0.5rem;">Delete</button>` : 
+                                '<span style="color: #9ca3af;">Current User</span>'
+                            }
+                        </td>
+                    </tr>
+                `).join('');
+
+                // Update bookings table
+                const adminBookingsTable = document.getElementById('adminBookingsTable');
+                adminBookingsTable.innerHTML = bookings.map(booking => `
+                    <tr>
+                        <td>#${booking.id}</td>
+                        <td>${booking.userName}</td>
+                        <td>${booking.fromCity} → ${booking.toCity}</td>
+                        <td>${new Date(booking.departureDate).toLocaleDateString()}</td>
+                        <td>${booking.passengers}</td>
+                        <td>$${booking.totalPrice}</td>
+                        <td>${booking.cardNumber || 'N/A'}</td>
+                        <td><span class="booking-status status-${booking.status}">${booking.status}</span></td>
+                    </tr>
+                `).join('');
+
+            } catch (error) {
+                console.error('Failed to load admin data:', error);
+            }
+        }
+
+        // Admin user management functions
+        document.getElementById('addUserForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const userData = {
+                fullName: document.getElementById('newUserName').value,
+                email: document.getElementById('newUserEmail').value,
+                password: document.getElementById('newUserPassword').value,
+                phone: document.getElementById('newUserPhone').value,
+                role: document.getElementById('newUserRole').value
+            };
+            
+            try {
+                const response = await fetch('/api/admin/users', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userData)
+                });
+                
+                if (response.ok) {
+                    alert('User created successfully!');
+                    document.getElementById('addUserForm').reset();
+                    loadAdminData(); // Refresh the data
+                } else {
+                    const error = await response.json();
+                    alert('Failed to create user: ' + error.error);
+                }
+            } catch (error) {
+                alert('Network error. Please try again.');
+            }
+        });
+
+        async function changeUserRole(userId, newRole) {
+            try {
+                const response = await fetch(`/api/admin/users/${userId}/role`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ role: newRole })
+                });
+                
+                if (response.ok) {
+                    alert('User role updated successfully!');
+                    loadAdminData(); // Refresh the data
+                } else {
+                    const error = await response.json();
+                    alert('Failed to update role: ' + error.error);
+                    loadAdminData(); // Refresh to revert the dropdown
+                }
+            } catch (error) {
+                alert('Network error. Please try again.');
+                loadAdminData(); // Refresh to revert the dropdown
+            }
+        }
+
+        async function deleteUser(userId, userName) {
+            if (!confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/admin/users/${userId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    alert('User deleted successfully!');
+                    loadAdminData(); // Refresh the data
+                } else {
+                    const error = await response.json();
+                    alert('Failed to delete user: ' + error.error);
+                }
+            } catch (error) {
+                alert('Network error. Please try again.');
+            }
+        }
+
+        function refreshAdminData() {
+            loadAdminData();
+            alert('Admin data refreshed!');
+        }
+
+        function exportUserData() {
+            // This would normally export data, but for demo purposes, just show alert
+            alert('User data export feature - This would normally download a CSV file with all user data (including passwords in plain text due to vulnerability).');
+        }
+
+        function showSystemInfo() {
+            const systemInfo = document.getElementById('systemInfo');
+            systemInfo.style.display = systemInfo.style.display === 'none' ? 'block' : 'none';
+        }
+
+        async function logout() {
+            try {
+                await fetch('/api/logout', { method: 'POST' });
+                window.location.href = '/';
+            } catch (error) {
+                console.error('Logout failed:', error);
+                window.location.href = '/';
+            }
+        }
+    </script>
+</body>
+</html>

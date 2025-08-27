@@ -12,14 +12,37 @@ const PORT = process.env.PORT || 3000;
 // MongoDB connection - Use environment variable in production
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://123gamein:pffyW62Rqn1Kgzfa@bus.taxstpk.mongodb.net/?retryWrites=true&w=majority&appName=Bus';
 
-mongoose.connect(MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-}).then(() => {
-    console.log('📦 Connected to MongoDB successfully');
-}).catch(err => {
-    console.error('❌ MongoDB connection error:', err);
-});
+// Global connection variable for serverless
+let cachedConnection = null;
+
+async function connectToDatabase() {
+    if (cachedConnection && mongoose.connection.readyState === 1) {
+        return cachedConnection;
+    }
+
+    try {
+        const connection = await mongoose.connect(MONGODB_URI, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+            serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+            socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
+        });
+        
+        cachedConnection = connection;
+        console.log('📦 Connected to MongoDB successfully');
+        
+        // Initialize data after connection
+        await initializeData();
+        
+        return connection;
+    } catch (error) {
+        console.error('❌ MongoDB connection error:', error);
+        throw error;
+    }
+}
+
+// Connect to database immediately
+connectToDatabase().catch(console.error);
 
 // Define MongoDB Schemas
 const userSchema = new mongoose.Schema({
@@ -235,15 +258,23 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Environment check for deployment debugging
+console.log('🌍 Environment Info:');
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('PORT:', process.env.PORT);
+console.log('RENDER:', process.env.RENDER);
+console.log('RENDER_EXTERNAL_URL:', process.env.RENDER_EXTERNAL_URL);
+
 // Session configuration (intentionally insecure for demo)
 app.use(session({
     secret: process.env.SESSION_SECRET || 'demo-secret-key', // Use env variable in production
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: process.env.NODE_ENV === 'production', // HTTPS in production
+        secure: false, // Keep false for demo - even in production (VULNERABLE!)
         httpOnly: false, // Vulnerable to XSS (intentional for demo)
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+        sameSite: 'lax' // Add sameSite for better compatibility
     }
 }));
 
@@ -262,11 +293,52 @@ app.get('/register', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'register.html'));
 });
 
-app.get('/dashboard', (req, res) => {
-    if (!req.session.userId) {
-        return res.redirect('/login');
+// Dashboard route
+app.get('/dashboard', requireAuth, async (req, res) => {
+    try {
+        const user = await User.findById(req.session.userId);
+        if (!user) {
+            return res.redirect('/login');
+        }
+        res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+    } catch (error) {
+        console.error('Dashboard error:', error);
+        res.redirect('/login');
     }
-    res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+});
+
+// Alternative login route that redirects directly (for better compatibility)
+app.post('/login-redirect', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        
+        // Find user
+        const user = await User.findOne({ 
+            email: { $regex: new RegExp(`^${email}$`, 'i') }
+        });
+        
+        if (!user || user.password !== password) {
+            return res.redirect('/login?error=invalid');
+        }
+        
+        // Create session
+        req.session.userId = user._id;
+        req.session.userRole = user.role;
+        req.session.userEmail = user.email;
+        
+        // Save session and redirect
+        req.session.save((err) => {
+            if (err) {
+                console.error('Session save error:', err);
+                return res.redirect('/login?error=session');
+            }
+            res.redirect('/dashboard');
+        });
+        
+    } catch (error) {
+        console.error('Login redirect error:', error);
+        res.redirect('/login?error=server');
+    }
 });
 
 // VULNERABLE: Admin access without role validation
@@ -342,48 +414,62 @@ app.post('/api/register', [
 // Login endpoint
 app.post('/api/login', async (req, res) => {
     try {
-        console.log('Login request body:', req.body); // Debug log
+        console.log('📝 Login attempt:', { email: req.body.email, timestamp: new Date() });
+        
         const { email, password } = req.body;
-
-        if (!email || !password) {
-            console.log('Missing email or password:', { email, password }); // Debug log
-            return res.status(400).json({ error: 'Email and password required' });
-        }
-
-        // Find user by email
-        const user = await User.findOne({ email });
-        if (!user) {
-            console.log('User not found:', email); // Debug log
-            return res.status(401).json({ error: 'Invalid credentials' });
-        }
-
-        console.log('Found user:', { email: user.email, password: user.password }); // Debug log
-
-        // VULNERABLE: Plain text password comparison
-        if (user.password !== password) {
-            console.log('Password mismatch:', { provided: password, stored: user.password }); // Debug log
-            return res.status(401).json({ error: 'Invalid credentials' });
-        }
-
-        // Set session
-        req.session.userId = user._id;
-        req.session.userEmail = user.email;
-        req.session.userRole = user.role;
-
-        res.json({
-            message: 'Login successful',
-            user: {
-                id: user._id,
-                username: user.username,
-                email: user.email,
-                fullname: user.fullname,
-                role: user.role
-            }
+        
+        // Find user (case insensitive)
+        const user = await User.findOne({ 
+            email: { $regex: new RegExp(`^${email}$`, 'i') }
         });
-
+        
+        if (!user) {
+            console.log('❌ User not found:', email);
+            return res.status(401).json({ error: 'User not found' });
+        }
+        
+        console.log('👤 User found:', { email: user.email, role: user.role });
+        
+        // Check password (intentionally vulnerable - no hashing)
+        if (user.password !== password) {
+            console.log('❌ Wrong password for user:', email);
+            return res.status(401).json({ error: 'Invalid password' });
+        }
+        
+        // Create session
+        req.session.userId = user._id;
+        req.session.userRole = user.role;
+        req.session.userEmail = user.email;
+        
+        console.log('✅ Login successful:', { 
+            email: user.email, 
+            role: user.role,
+            sessionId: req.sessionID 
+        });
+        
+        // Save session and send response
+        req.session.save((err) => {
+            if (err) {
+                console.error('Session save error:', err);
+                return res.status(500).json({ error: 'Session error' });
+            }
+            
+            res.json({ 
+                success: true,
+                user: {
+                    id: user._id,
+                    email: user.email,
+                    role: user.role,
+                    firstName: user.firstName,
+                    lastName: user.lastName
+                },
+                redirectUrl: '/dashboard' // Add explicit redirect URL
+            });
+        });
+        
     } catch (error) {
         console.error('Login error:', error);
-        res.status(500).json({ error: 'Login failed' });
+        res.status(500).json({ error: 'Server error during login' });
     }
 });
 
@@ -948,6 +1034,17 @@ app.get('/api/admin/users', async (req, res) => {
     }
 });
 
+// Middleware to ensure database connection
+app.use(async (req, res, next) => {
+    try {
+        await connectToDatabase();
+        next();
+    } catch (error) {
+        console.error('Database connection failed:', error);
+        res.status(500).json({ error: 'Database connection failed' });
+    }
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error('Error:', err);
@@ -959,25 +1056,21 @@ app.use((req, res) => {
     res.status(404).json({ error: 'Not found' });
 });
 
-// Initialize data and start server
-mongoose.connection.once('open', async () => {
-    await initializeData();
-    
-    // Only start server if not in Vercel (serverless) environment
-    if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-        app.listen(PORT, () => {
-            console.log(`🚌 BusBook Travel Platform running on port ${PORT}`);
-            console.log(`🌐 Visit http://localhost:${PORT} to start booking`);
-            console.log(`👤 Demo accounts:`);
-            console.log(`   Customer: user@gmail.com / password`);
-            console.log(`   Admin: admin@busbook.com / admin123`);
-            console.log(`   Manager: manager@busbook.com / manager123`);
-            console.log(`   Sarah: sarah.johnson@gmail.com / sarah123`);
-            console.log(`🔓 Try accessing /admin with any user account...`);
-            console.log(`🔍 View security vulnerabilities at http://localhost:${PORT}/vulnerability`);
-        });
-    }
-});
+// For local development only
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => {
+        console.log(`🚌 BusBook Travel Platform running on port ${PORT}`);
+        console.log(`🌐 Visit http://localhost:${PORT} to start booking`);
+        console.log(`👤 Demo accounts:`);
+        console.log(`   Customer: user@gmail.com / password`);
+        console.log(`   Admin: admin@busbook.com / admin123`);
+        console.log(`   Manager: manager@busbook.com / manager123`);
+        console.log(`   Sarah: sarah.johnson@gmail.com / sarah123`);
+        console.log(`🔓 Try accessing /admin with any user account...`);
+        console.log(`🔍 View security vulnerabilities at http://localhost:${PORT}/vulnerability`);
+    });
+}
 
 // Export for Vercel
 module.exports = app;

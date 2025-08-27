@@ -105,7 +105,8 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(loginData)
+                    body: JSON.stringify(loginData),
+                    credentials: 'include' // Important for session cookies
                 });
                 
                 const result = await response.json();
@@ -113,14 +114,14 @@
                 if (response.ok) {
                     showAlert('Login successful! Redirecting...', 'success');
                     
-                    // Redirect based on user role
+                    // Use server-provided redirect URL or fallback
+                    const redirectUrl = result.redirectUrl || '/dashboard';
+                    
+                    // Redirect with a small delay
                     setTimeout(() => {
-                        if (result.user.role === 'admin' || result.user.role === 'manager') {
-                            window.location.href = '/dashboard';
-                        } else {
-                            window.location.href = '/dashboard';
-                        }
-                    }, 1000);
+                        // Use window.location.replace for better compatibility
+                        window.location.replace(redirectUrl);
+                    }, 500);
                 } else {
                     showAlert(result.error || 'Login failed. Please try again.', 'error');
                 }
